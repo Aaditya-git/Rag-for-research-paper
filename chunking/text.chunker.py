@@ -175,7 +175,6 @@ def create_chunk_metadata(chunk_text, chunk_id, char_start, char_end, source_met
 
 
 def get_overlap_text(text, overlap_size):
-    """Get the last N characters from text for overlap."""
     if len(text) <= overlap_size:
         return text
     
@@ -193,7 +192,6 @@ def get_overlap_text(text, overlap_size):
 
 
 def split_long_sentence(sentence, max_size):
-    """Split a sentence that's longer than max_size."""
     words = sentence.split()
     chunks = []
     current = []
@@ -218,21 +216,7 @@ def split_long_sentence(sentence, max_size):
 
 
 def save_chunks_as_markdown(chunks, output_file):
-    """
-    Save chunks as a markdown file with metadata in frontmatter.
-    
-    Format:
-    ---
-    chunk_id: 0
-    relevance_score: 0.75
-    source_document: paper.pdf
-    char_range: 0-1000
-    ---
-    
-    [Chunk text here]
-    
-    ---
-    """
+
     output_path = Path(output_file)
     output_path.parent.mkdir(parents=True, exist_ok=True)
     
@@ -264,7 +248,7 @@ def save_chunks_as_markdown(chunks, output_file):
     print(f"Saved chunks as markdown: {output_path}")
 
 
-def chunk_file(input_file, output_format="markdown", chunk_size=1000, overlap=200):
+def chunk_file(input_file, output_format="pdf", chunk_size=1000, overlap=200):
     """
     Read a markdown file and chunk its content.
     
@@ -335,7 +319,7 @@ def chunk_file(input_file, output_format="markdown", chunk_size=1000, overlap=20
     return chunks
 
 
-def chunk_all_extractions(base_dir="outputs/pymupdf4llm", output_format="markdown", 
+def chunk_all_extractions(base_dir=r"D:\study-code-repeat\coding\pdf-extraction-pipeline\outputs\pymupdf4llm", output_format="markdown", 
                           chunk_size=1000, overlap=200):
     """
     Chunk all extracted markdown files in the output directory.
@@ -381,7 +365,7 @@ def chunk_all_extractions(base_dir="outputs/pymupdf4llm", output_format="markdow
 
 if __name__ == "__main__":
     chunk_all_extractions(
-        base_dir="D:\study-code-repeat\coding\pdf-extraction-pipeline\outputs\pymupdf4llm",
+        base_dir=r"D:\study-code-repeat\coding\pdf-extraction-pipeline\outputs\pymupdf4llm",
         output_format="markdown",  # or "json"
         chunk_size=1000,
         overlap=200

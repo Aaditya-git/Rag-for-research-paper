@@ -1,7 +1,7 @@
 {
   "extractor": "pymupdf4llm",
   "pdf_name": "2309.11998v4",
-  "processing_time_seconds": 6.05,
+  "processing_time_seconds": 5.08,
   "total_pages": 33,
   "total_text_length": 81157,
   "images_extracted": 2,
