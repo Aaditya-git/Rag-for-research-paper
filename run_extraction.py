@@ -6,8 +6,6 @@ from datetime import datetime
 sys.path.insert(0, str(Path(__file__).parent))
 
 from pymupdf4llm.extractor import PyMuPDFExtractor
-# from rag_unstructured.extractor import UnstructuredExtractor  # Coming next
-# from docling.extractor import DoclingExtractor  # Coming next
 
 
 def main():
@@ -23,9 +21,7 @@ def main():
     print(f"Found {len(pdf_files)} PDF(s) to process\n")
 
     extractors = {
-        "pymupdf4llm": PyMuPDFExtractor(),
-        # "unstructured": UnstructuredExtractor(),  
-        # "docling": DoclingExtractor()  
+        "pymupdf4llm": PyMuPDFExtractor(), 
     }
 
     all_reports = []
