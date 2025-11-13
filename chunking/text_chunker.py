@@ -393,8 +393,8 @@ def chunk_markdown_file(md_file, chunk_size=1000, overlap=200):
     
     source_metadata = {
         "source_document": md_path.name,
-        "source_path": str(md_path.absolute()),
-    }
+        "source_path": str(md_path.absolute()), # save some changes
+    }  
     
     text_chunks = chunk_text(text, chunk_size, overlap, source_metadata)
     print(f"Created {len(text_chunks)} text chunks")
