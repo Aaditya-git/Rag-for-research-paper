@@ -4,6 +4,10 @@ import time
 from pathlib import Path
 from typing import Dict, Any
 import fitz
+import sys
+
+sys.path.insert(0, str(Path(__file__).parent.parent))
+from chunking.text_chunker import chunk_markdown_file
 
 
 class PyMuPDFExtractor:
@@ -12,7 +16,7 @@ class PyMuPDFExtractor:
         self.output_dir = Path(output_dir)
         self.output_dir.mkdir(parents=True, exist_ok=True)
     
-    def extract(self, pdf_path: str) -> Dict[str, Any]:
+    def extract(self, pdf_path: str, auto_chunk: bool = True, chunk_size: int = 1000, overlap: int = 200) -> Dict[str, Any]:
         pdf_path = Path(pdf_path)
         pdf_name = pdf_path.stem
         start_time = time.time()
@@ -28,19 +32,33 @@ class PyMuPDFExtractor:
         tables_dir.mkdir(exist_ok=True)
         
         md_text = self._extract_markdown(pdf_path)
-        json_data = self._extract_structured_data(pdf_path)
+        json_data = self._extract_structured_data(pdf_path)  # not using
         image_count = self._extract_images(pdf_path, images_dir)
         table_count = self._extract_tables(pdf_path, tables_dir)
         
-        md_file = output_base / f"{pdf_name}_text.md"
-        with open(md_file, 'w', encoding='utf-8') as f:
+        # Optionally save the full extracted markdown
+        # md_file = output_base / f"{pdf_name}_text.md"
+        # with open(md_file, 'w', encoding='utf-8') as f:
+        #     f.write(md_text)
+        
+        # Save to temp file for chunking
+        temp_md_file = output_base / f"{pdf_name}_temp.md"
+        with open(temp_md_file, 'w', encoding='utf-8') as f:
             f.write(md_text)
         
-        json_file = output_base / f"{pdf_name}_struct.json"
-        with open(json_file, 'w', encoding='utf-8') as f:
-            json.dump(json_data, f, indent=2, ensure_ascii=False)
-        
         elapsed = time.time() - start_time
+        
+        print(f"Completed in {elapsed:.2f}s - Pages: {json_data['total_pages']}, Images: {image_count}, Tables: {table_count}")
+        
+        chunk_count = 0
+        if auto_chunk:
+            print("\nStarting chunking...")
+            chunks = chunk_markdown_file(str(temp_md_file), chunk_size, overlap)
+            chunk_count = chunks['total']
+            
+            # Remove temp file after chunking
+            temp_md_file.unlink()
+        
         report = {
             "extractor": "pymupdf4llm",
             "pdf_name": pdf_name,
@@ -49,28 +67,18 @@ class PyMuPDFExtractor:
             "total_text_length": len(md_text),
             "images_extracted": image_count,
             "tables_extracted": table_count,
-            "output_files": {
-                "markdown": str(md_file.name),
-                "json": str(json_file.name),
-                "images_dir": str(images_dir.name),
-                "tables_dir": str(tables_dir.name)
-            }
+            "chunks_created": chunk_count
         }
         
-        report_file = output_base / f"{pdf_name}_report.json"
-        with open(report_file, 'w', encoding='utf-8') as f:
-            json.dump(report, f, indent=2)
-        
-        print(f"Completed in {elapsed:.2f}s - Pages: {json_data['total_pages']}, Images: {image_count}, Tables: {table_count}")
         
         return report
     
     def _extract_markdown(self, pdf_path: Path) -> str:
-        doc = fitz.open(pdf_path)
+        doc = fitz.open(pdf_path) 
         md_lines = []
         
         for page_num, page in enumerate(doc, 1):
-            text = page.get_text()
+            text = page.get_text() 
             if text.strip():
                 md_lines.append(f"\n--- Page {page_num} ---\n")
                 md_lines.append(text)
@@ -123,13 +131,14 @@ class PyMuPDFExtractor:
                         img_file.write(image_bytes)
                     
                     image_count += 1
-                except Exception as e:
+                except:
                     continue
         
         doc.close()
         return image_count
     
     def _extract_tables(self, pdf_path: Path, output_dir: Path) -> int:
+        """Extract tables and save as MARKDOWN format."""
         doc = fitz.open(pdf_path)
         table_count = 0
         
@@ -141,20 +150,32 @@ class PyMuPDFExtractor:
                     for table_index, table in enumerate(tables):
                         try:
                             table_data = table.extract()
-                            table_file = output_dir / f"page{page_num}_table{table_index + 1}.json"
+                            
+                            # Save as markdown instead of JSON
+                            table_file = output_dir / f"page{page_num}_table{table_index + 1}.md"
                             
                             with open(table_file, 'w', encoding='utf-8') as f:
-                                json.dump({
-                                    "page": page_num,
-                                    "table_index": table_index + 1,
-                                    "rows": len(table_data) if table_data else 0,
-                                    "data": table_data
-                                }, f, indent=2, ensure_ascii=False)
+                                f.write(f"# Table from Page {page_num}\n\n")
+                                f.write(f"**Table Index:** {table_index + 1}\n\n")
+                                f.write(f"**Rows:** {len(table_data) if table_data else 0}\n\n")
+                                f.write("---\n\n")
+                                
+                                # Convert to markdown table
+                                if table_data and len(table_data) > 0:
+                                    # Header row
+                                    if table_data[0]:
+                                        f.write("| " + " | ".join(str(cell) if cell else "" for cell in table_data[0]) + " |\n")
+                                        f.write("|" + "|".join([" --- " for _ in table_data[0]]) + "|\n")
+                                    
+                                    # Data rows
+                                    for row in table_data[1:]:
+                                        if row:
+                                            f.write("| " + " | ".join(str(cell) if cell else "" for cell in row) + " |\n")
                             
                             table_count += 1
-                        except Exception as e:
+                        except:
                             continue
-            except Exception as e:
+            except:
                 continue
         
         doc.close()
