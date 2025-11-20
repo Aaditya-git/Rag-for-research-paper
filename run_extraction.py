@@ -27,38 +27,56 @@ def main():
         print('=' * 60)
         
         try:
+            # Extract PDF (creates temp markdown file)
             report = extractor.extract(
                 str(pdf_file),
-                auto_chunk=True,    
-                chunk_size=1000,
-                overlap=200
+                auto_chunk=False  # Don't auto-chunk yet
             )
             
-            print(f"\nReport: {report['chunks_created']} chunks created")
+            print(f"\nExtraction complete: {report['total_pages']} pages")
+            
+            # Now manually chunk with BOTH methods
+            from chunking.text_chunker import chunk_markdown_file
+            
+            # Find the temp file that was created
+            pdf_name = pdf_file.stem
+            temp_md_file = f"outputs/pymupdf4llm/{pdf_name}/{pdf_name}_temp.md"
+            
+            if Path(temp_md_file).exists():
+                print("\n--- Creating Recursive Chunks ---")
+                recursive_chunks = chunk_markdown_file(
+                    temp_md_file,
+                    chunk_size=1000,
+                    overlap=200,
+                    use_semantic=False
+                )
+                
+                print("\n--- Creating Semantic Chunks ---")
+                semantic_chunks = chunk_markdown_file(
+                    temp_md_file,
+                    chunk_size=1000,
+                    overlap=200,
+                    use_semantic=True,
+                    similarity_threshold=0.7
+                )
+                
+                print(f"\nChunking complete:")
+                print(f"  - Recursive: {len(recursive_chunks)} chunks")
+                print(f"  - Semantic: {len(semantic_chunks)} chunks")
+            else:
+                print(f"Temp file not found: {temp_md_file}")
             
         except Exception as e:
             print(f"Failed: {str(e)}")
+            import traceback
+            traceback.print_exc()
     
     print(f"\n{'=' * 60}")
-    print("COMPLETE")
-    print(f"{'=' * 60}\n")
+    print("EXTRACTION AND CHUNKING COMPLETE")
+    print(f"{'=' * 60}")
+    print(f"Total PDFs processed: {len(pdf_files)}")
+    print("Check outputs/ folder for results\n")
 
 
 if __name__ == "__main__":
     main()
-# ```
-
-# ---
-
-# ## **How it works:**
-
-# 1. **Run:** `python run_extraction.py`
-
-# 2. **Output structure:**
-# ```
-# outputs/pymupdf4llm/2309.11998v4/
-# ├── 2309.11998v4_text.md          ← Extracted markdown
-# ├── 2309.11998v4_images/          ← Extracted images
-# ├── 2309.11998v4_tables/          ← Extracted tables
-# └── chunks/
-#     └── 2309.11998v4_text_chunks.md  ← Chunked markdown

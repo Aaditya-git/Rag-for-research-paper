@@ -31,46 +31,48 @@ class PyMuPDFExtractor:
         images_dir.mkdir(exist_ok=True)
         tables_dir.mkdir(exist_ok=True)
         
+        # Extract markdown text
         md_text = self._extract_markdown(pdf_path)
-        json_data = self._extract_structured_data(pdf_path)  # not using
+        
+        # Get page count
+        doc = fitz.open(pdf_path)
+        total_pages = len(doc)
+        doc.close()
+        
+        # Extract images and tables
         image_count = self._extract_images(pdf_path, images_dir)
         table_count = self._extract_tables(pdf_path, tables_dir)
         
-        # Optionally save the full extracted markdown
-        # md_file = output_base / f"{pdf_name}_text.md"
-        # with open(md_file, 'w', encoding='utf-8') as f:
-        #     f.write(md_text)
-        
-        # Save to temp file for chunking
+        # Save temporary markdown file (DON'T DELETE IT)
         temp_md_file = output_base / f"{pdf_name}_temp.md"
         with open(temp_md_file, 'w', encoding='utf-8') as f:
             f.write(md_text)
         
         elapsed = time.time() - start_time
         
-        print(f"Completed in {elapsed:.2f}s - Pages: {json_data['total_pages']}, Images: {image_count}, Tables: {table_count}")
+        print(f"Completed in {elapsed:.2f}s - Pages: {total_pages}, Images: {image_count}, Tables: {table_count}")
         
+        # Auto-chunk if requested (optional, now controlled from run_extraction.py)
         chunk_count = 0
         if auto_chunk:
             print("\nStarting chunking...")
+            from chunking.text_chunker import chunk_markdown_file
             chunks = chunk_markdown_file(str(temp_md_file), chunk_size, overlap)
-            chunk_count = chunks['total']
-            
-            # Remove temp file after chunking
-            temp_md_file.unlink()
+            chunk_count = len(chunks) if isinstance(chunks, list) else chunks.get('total', 0)
+            # DON'T delete temp file anymore
+            # temp_md_file.unlink()
         
         report = {
             "extractor": "pymupdf4llm",
             "pdf_name": pdf_name,
             "processing_time_seconds": round(elapsed, 2),
-            "total_pages": json_data['total_pages'],
+            "total_pages": total_pages,
             "total_text_length": len(md_text),
             "images_extracted": image_count,
             "tables_extracted": table_count,
             "chunks_created": chunk_count
         }
-        
-        
+    
         return report
     
     def _extract_markdown(self, pdf_path: Path) -> str:
