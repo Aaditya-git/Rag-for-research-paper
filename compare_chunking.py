@@ -75,7 +75,7 @@ def create_collection(collection_name, dim=EMBEDDING_DIM):
     
     # Create index for vector search
     index_params = {
-        "metric_type": "COSINE",  # Better for semantic similarity
+        "metric_type": "COSINE",  
         "index_type": "IVF_FLAT",
         "params": {"nlist": 128}
     }
