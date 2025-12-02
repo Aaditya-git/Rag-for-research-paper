@@ -114,71 +114,71 @@ class PyMuPDFExtractor:
             "pages": pages_data
         }
     
-    def _extract_images(self, pdf_path: Path, output_dir: Path) -> int:
-        doc = fitz.open(pdf_path)
-        image_count = 0
+    # def _extract_images(self, pdf_path: Path, output_dir: Path) -> int:
+    #     doc = fitz.open(pdf_path)
+    #     image_count = 0
         
-        for page_num, page in enumerate(doc, 1):
-            image_list = page.get_images(full=True)
+    #     for page_num, page in enumerate(doc, 1):
+    #         image_list = page.get_images(full=True)
             
-            for img_index, img in enumerate(image_list):
-                xref = img[0]
-                try:
-                    base_image = doc.extract_image(xref)
-                    image_bytes = base_image["image"]
-                    image_ext = base_image["ext"]
+    #         for img_index, img in enumerate(image_list):
+    #             xref = img[0]
+    #             try:
+    #                 base_image = doc.extract_image(xref)
+    #                 image_bytes = base_image["image"]
+    #                 image_ext = base_image["ext"]
                     
-                    image_filename = output_dir / f"page{page_num}_img{img_index + 1}.{image_ext}"
-                    with open(image_filename, "wb") as img_file:
-                        img_file.write(image_bytes)
+    #                 image_filename = output_dir / f"page{page_num}_img{img_index + 1}.{image_ext}"
+    #                 with open(image_filename, "wb") as img_file:
+    #                     img_file.write(image_bytes)
                     
-                    image_count += 1
-                except:
-                    continue
+    #                 image_count += 1
+    #             except:
+    #                 continue
         
-        doc.close()
-        return image_count
+    #     doc.close()
+    #     return image_count
     
-    def _extract_tables(self, pdf_path: Path, output_dir: Path) -> int:
-        """Extract tables and save as MARKDOWN format."""
-        doc = fitz.open(pdf_path)
-        table_count = 0
+    # def _extract_tables(self, pdf_path: Path, output_dir: Path) -> int:
+    #     """Extract tables and save as MARKDOWN format."""
+    #     doc = fitz.open(pdf_path)
+    #     table_count = 0
         
-        for page_num, page in enumerate(doc, 1):
-            try:
-                tables = page.find_tables()
+    #     for page_num, page in enumerate(doc, 1):
+    #         try:
+    #             tables = page.find_tables()
                 
-                if tables:
-                    for table_index, table in enumerate(tables):
-                        try:
-                            table_data = table.extract()
+    #             if tables:
+    #                 for table_index, table in enumerate(tables):
+    #                     try:
+    #                         table_data = table.extract()
                             
-                            # Save as markdown instead of JSON
-                            table_file = output_dir / f"page{page_num}_table{table_index + 1}.md"
+    #                         # Save as markdown instead of JSON
+    #                         table_file = output_dir / f"page{page_num}_table{table_index + 1}.md"
                             
-                            with open(table_file, 'w', encoding='utf-8') as f:
-                                f.write(f"# Table from Page {page_num}\n\n")
-                                f.write(f"**Table Index:** {table_index + 1}\n\n")
-                                f.write(f"**Rows:** {len(table_data) if table_data else 0}\n\n")
-                                f.write("---\n\n")
+    #                         with open(table_file, 'w', encoding='utf-8') as f:
+    #                             f.write(f"# Table from Page {page_num}\n\n")
+    #                             f.write(f"**Table Index:** {table_index + 1}\n\n")
+    #                             f.write(f"**Rows:** {len(table_data) if table_data else 0}\n\n")
+    #                             f.write("---\n\n")
                                 
-                                # Convert to markdown table
-                                if table_data and len(table_data) > 0:
-                                    # Header row
-                                    if table_data[0]:
-                                        f.write("| " + " | ".join(str(cell) if cell else "" for cell in table_data[0]) + " |\n")
-                                        f.write("|" + "|".join([" --- " for _ in table_data[0]]) + "|\n")
+    #                             # Convert to markdown table
+    #                             if table_data and len(table_data) > 0:
+    #                                 # Header row
+    #                                 if table_data[0]:
+    #                                     f.write("| " + " | ".join(str(cell) if cell else "" for cell in table_data[0]) + " |\n")
+    #                                     f.write("|" + "|".join([" --- " for _ in table_data[0]]) + "|\n")
                                     
-                                    # Data rows
-                                    for row in table_data[1:]:
-                                        if row:
-                                            f.write("| " + " | ".join(str(cell) if cell else "" for cell in row) + " |\n")
+    #                                 # Data rows
+    #                                 for row in table_data[1:]:
+    #                                     if row:
+    #                                         f.write("| " + " | ".join(str(cell) if cell else "" for cell in row) + " |\n")
                             
-                            table_count += 1
-                        except:
-                            continue
-            except:
-                continue
+    #                         table_count += 1
+    #                     except:
+    #                         continue
+    #         except:
+    #             continue
         
-        doc.close()
-        return table_count
+    #     doc.close()
+    #     return table_count
