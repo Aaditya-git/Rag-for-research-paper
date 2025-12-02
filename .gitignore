@@ -1,0 +1,15 @@
+# Python cache
+__pycache__/
+*.pyc
+
+# Output files
+outputs/
+tags
+
+# Vim temp files
+*.swp
+*.swo
+
+# PDF inputs
+pdfs/*.pdf
+
