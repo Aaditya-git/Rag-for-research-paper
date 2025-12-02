@@ -10,7 +10,7 @@ from chunking.text_chunker import chunk_markdown_file
 def main():
     print("\nPDF Extraction and Recursive Chunking")
     print("-" * 60)
-
+    print("test")
     pdf_dir = Path("pdfs")
     pdf_files = list(pdf_dir.glob("*.pdf"))
 
