@@ -9,3 +9,4 @@ tqdm>=4.66.0
 pymilvus[milvus-lite]>=2.3.0
 sentence-transformers
 scikit-learn
+openai
